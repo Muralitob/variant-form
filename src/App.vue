@@ -6,7 +6,7 @@
 
 <script>
 import VFormDesigner from './components/form-designer/index.vue'
-
+//添加注释
 export default {
   name: 'App',
   components: {
