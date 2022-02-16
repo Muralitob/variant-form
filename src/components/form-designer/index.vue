@@ -65,7 +65,13 @@
   import SettingPanel from './setting-panel/index'
   import VFormWidget from './form-widget/index'
   import {createDesigner} from "@/components/form-designer/designer"
-  import {addWindowResizeHandler, deepClone, getQueryParam} from "@/utils/util"
+  import {
+    addWindowResizeHandler,
+    deepClone,
+    getAllContainerWidgets,
+    getAllFieldWidgets,
+    getQueryParam
+  } from "@/utils/util"
   import {MOCK_CASE_URL, VARIANT_FORM_VERSION} from "@/utils/config"
   import i18n, { changeLocale } from "@/utils/i18n"
   import axios from "axios"
@@ -101,12 +107,16 @@
             externalLink: true,  //是否显示GitHub、文档等外部链接
             formTemplates: true,  //是否显示表单模板
             eventCollapse: true,  //是否显示组件事件属性折叠面板
+            widgetNameReadonly: false,  //禁止修改组件名称
+
             clearDesignerButton: true,  //是否显示清空设计器按钮
             previewFormButton: true,  //是否显示预览表单按钮
             importJsonButton: true,  //是否显示导入JSON按钮
             exportJsonButton: true,  //是否显示导出JSON器按钮
             exportCodeButton: true,  //是否显示导出代码按钮
             generateSFCButton: true,  //是否显示生成SFC按钮
+            toolbarMaxWidth: 420,  //设计器工具按钮栏最大宽度（单位像素）
+            toolbarMinWidth: 300,  //设计器工具按钮栏最小宽度（单位像素）
 
             presetCssCode: '',  //设计器预设CSS样式代码
           }
@@ -230,10 +240,12 @@
           return
         }
 
-        axios.get(this.fieldListApi.URL).then(res => {
+        let headers = this.fieldListApi.headers || {}
+        axios.get(this.fieldListApi.URL, {'headers': headers}).then(res => {
           let labelKey = this.fieldListApi.labelKey || 'label'
           let nameKey = this.fieldListApi.nameKey || 'name'
 
+          this.fieldList.splice(0, this.fileList.length)  //清空已有
           res.data.forEach(fieldItem => {
             this.fieldList.push({
               label: fieldItem[labelKey],
@@ -327,6 +339,22 @@
         this.$refs.toolbarRef.generateSFC()
       },
 
+      /**
+       * 获取所有字段组件
+       * @returns {*[]}
+       */
+      getFieldWidgets() {
+        return getAllFieldWidgets(this.designer.widgetList)
+      },
+
+      /**
+       * 获取所有容器组件
+       * @returns {*[]}
+       */
+      getContainerWidgets() {
+        return getAllContainerWidgets(this.designer.widgetList)
+      },
+
       //TODO: 增加更多方法！！
 
     }
@@ -334,6 +362,14 @@
 </script>
 
 <style lang="scss" scoped>
+  .el-container.main-container {
+    ::v-deep aside {  /* 防止aside样式被外部样式覆盖！！ */
+      margin: 0;
+      padding: 0;
+      background: inherit;
+    }
+  }
+
   .el-container.full-height {
     height: 100%;
     overflow-y: hidden;

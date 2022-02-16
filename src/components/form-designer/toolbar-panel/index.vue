@@ -23,22 +23,24 @@
                icon-class="el-icon-arrow-right" @node-click="onNodeTreeClick"></el-tree>
     </el-drawer>
 
-    <div class="right-toolbar">
-      <el-button v-if="showToolButton('clearDesignerButton')" type="text" @click="clearFormWidget">
-        <i class="el-icon-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
-      <el-button v-if="showToolButton('previewFormButton')" type="text" @click="previewForm">
-        <i class="el-icon-view" />{{i18nt('designer.toolbar.preview')}}</el-button>
-      <el-button v-if="showToolButton('importJsonButton')" type="text" @click="importJson">
-        {{i18nt('designer.toolbar.importJson')}}</el-button>
-      <el-button v-if="showToolButton('exportJsonButton')" type="text" @click="exportJson">
-        {{i18nt('designer.toolbar.exportJson')}}</el-button>
-      <el-button v-if="showToolButton('exportCodeButton')" type="text" @click="exportCode">
-        {{i18nt('designer.toolbar.exportCode')}}</el-button>
-      <el-button v-if="showToolButton('generateSFCButton')" type="text" @click="generateSFC">
-        <svg-icon icon-class="vue-sfc" />{{i18nt('designer.toolbar.generateSFC')}}</el-button>
-      <template v-for="(idx, slotName) in $slots">
-        <slot :name="slotName"></slot>
-      </template>
+    <div class="right-toolbar" :style="{width: toolbarWidth + 'px'}">
+      <div class="right-toolbar-con">
+        <el-button v-if="showToolButton('clearDesignerButton')" type="text" @click="clearFormWidget">
+          <i class="el-icon-delete" />{{i18nt('designer.toolbar.clear')}}</el-button>
+        <el-button v-if="showToolButton('previewFormButton')" type="text" @click="previewForm">
+          <i class="el-icon-view" />{{i18nt('designer.toolbar.preview')}}</el-button>
+        <el-button v-if="showToolButton('importJsonButton')" type="text" @click="importJson">
+          {{i18nt('designer.toolbar.importJson')}}</el-button>
+        <el-button v-if="showToolButton('exportJsonButton')" type="text" @click="exportJson">
+          {{i18nt('designer.toolbar.exportJson')}}</el-button>
+        <el-button v-if="showToolButton('exportCodeButton')" type="text" @click="exportCode">
+          {{i18nt('designer.toolbar.exportCode')}}</el-button>
+        <el-button v-if="showToolButton('generateSFCButton')" type="text" @click="generateSFC">
+          <svg-icon icon-class="vue-sfc" />{{i18nt('designer.toolbar.generateSFC')}}</el-button>
+        <template v-for="(idx, slotName) in $slots">
+          <slot :name="slotName"></slot>
+        </template>
+      </div>
     </div>
 
     <el-dialog :title="i18nt('designer.toolbar.preview')" :visible.sync="showPreviewDialogFlag" v-if="showPreviewDialogFlag"
@@ -165,8 +167,8 @@
     copyToClipboard,
     generateId,
     getQueryParam,
-    traverseAllWidgets
-  } from "@/utils/util";
+    traverseAllWidgets, addWindowResizeHandler
+  } from "@/utils/util"
   import i18n from '@/utils/i18n'
   import {generateCode} from "@/utils/code-generator";
   import {genSFC} from "@/utils/sfc-generator";
@@ -190,6 +192,7 @@
       return {
         designerConfig: this.getDesignerConfig(),
 
+        toolbarWidth: 420,
         showPreviewDialogFlag: false,
         showImportJsonDialogFlag: false,
         showExportJsonDialogFlag: false,
@@ -233,7 +236,7 @@
             {label: '333', value: 3},
           ]
         },
-        
+
       }
     },
     computed: {
@@ -267,6 +270,18 @@
       },
 
 
+    },
+    mounted() {
+      let maxTBWidth = this.designerConfig.toolbarMaxWidth || 420
+      let minTBWidth = this.designerConfig.toolbarMinWidth || 300
+      let newTBWidth = window.innerWidth - 260 - 300 - 320 - 80
+      this.toolbarWidth = newTBWidth >= maxTBWidth ? maxTBWidth : (newTBWidth <= minTBWidth ? minTBWidth : newTBWidth)
+      addWindowResizeHandler(() => {
+        this.$nextTick(() => {
+          let newTBWidth2 = window.innerWidth - 260 - 300 - 320 - 80
+          this.toolbarWidth = newTBWidth2 >= maxTBWidth ? maxTBWidth : (newTBWidth2 <= minTBWidth ? minTBWidth : newTBWidth2)
+        })
+      })
     },
     methods: {
       showToolButton(configName) {
@@ -613,7 +628,8 @@
 
 <style lang="scss" scoped>
   div.toolbar-container {
-    min-width: 728px;  /* 解决工具按钮栏换行的问题！！ */
+    //min-width: 728px;  /* 解决工具按钮栏换行的问题 */
+    /* 上一行css有问题，当窗口宽度不足时会把按钮挤出到右边的属性设置区，弃之！ */
   }
 
   .left-toolbar {
@@ -623,6 +639,14 @@
 
   .right-toolbar {
     float: right;
+    //width: 420px;
+    text-align: right;
+    overflow: hidden;
+
+    .right-toolbar-con {
+      text-align: left;
+      width: 600px;
+    }
 
     ::v-deep .el-button--text {
       font-size: 14px !important;
